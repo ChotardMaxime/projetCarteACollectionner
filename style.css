@@ -1,0 +1,625 @@
+/* =========================================
+   VARIABLES & RESET
+   ========================================= */
+:root {
+    --couleur_fond: #dce3ea;
+    --couleur_header: #b8c4ce;
+    --couleur_nav_inactive: #4a5568;
+    --couleur_nav_active: #e8a020;
+    --couleur_nav_texte: #ffffff;
+    --couleur_card_fond: #ffffff;
+    --couleur_card_bordure: #b8c4ce;
+    --couleur_card_image: #c8d2db;
+    --couleur_texte_principal: #2d3748;
+    --couleur_texte_secondaire: #718096;
+    --couleur_footer: #b8c4ce;
+    --font_titre: 'Cinzel', serif;
+    --font_corps: 'Lato', sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font_corps);
+    background-color: var(--couleur_fond);
+    color: var(--couleur_texte_principal);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* =========================================
+   HEADER & TITRE
+   ========================================= */
+header {
+    background-color: var(--couleur_fond);
+}
+
+.titre {
+    background-color: var(--couleur_header);
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.titre h1 {
+    font-family: var(--font_titre);
+    font-size: 2.6rem;
+    font-weight: 400;
+    color: var(--couleur_texte_principal);
+    letter-spacing: 0.02em;
+}
+
+/* =========================================
+   BARRE DE NAVIGATION
+   ========================================= */
+.barre_navigation {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 12px 40px;
+    background-color: var(--couleur_fond);
+}
+
+/* Les 3 boutons principaux alignés en ligne et centrés */
+.nav_liens {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+}
+
+.nav_liens > div {
+    flex: 0 0 auto;
+}
+
+/* Bouton auth ancré à droite */
+.nav_auth {
+    position: absolute;
+    right: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.barre_navigation a {
+    display: block;
+    padding: 10px 40px;
+    text-decoration: none;
+    font-family: var(--font_corps);
+    font-size: 0.95rem;
+    font-weight: 400;
+    letter-spacing: 0.03em;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.mon_profil a,
+.gestion_des_cartes a {
+    background-color: var(--couleur_nav_inactive);
+    color: var(--couleur_nav_texte);
+}
+
+.mon_profil a:hover,
+.gestion_des_cartes a:hover {
+    background-color: #3a4558;
+}
+
+.voir_les_cartes a {
+    background-color: var(--couleur_nav_inactive);
+    color: var(--couleur_nav_texte);
+}
+
+.voir_les_cartes.actif a {
+    background-color: var(--couleur_nav_active);
+    color: var(--couleur_nav_texte);
+    font-weight: 700;
+}
+
+.voir_les_cartes a:hover {
+    background-color: #d4911a;
+}
+
+.mon_profil.actif a {
+    background-color: var(--couleur_nav_active);
+    color: var(--couleur_nav_texte);
+    font-weight: 700;
+}
+
+.gestion_des_cartes.actif a {
+    background-color: var(--couleur_nav_active);
+    color: var(--couleur_nav_texte);
+    font-weight: 700;
+}
+
+/* Bouton connexion / déconnexion */
+.btn_auth {
+    display: block;
+    padding: 10px 24px;
+    font-family: var(--font_corps);
+    font-size: 0.95rem;
+    font-weight: 400;
+    letter-spacing: 0.03em;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.btn_connexion {
+    background-color: var(--couleur_nav_active);
+    color: var(--couleur_nav_texte);
+}
+
+.btn_connexion:hover {
+    background-color: #d4911a;
+}
+
+.btn_deconnexion {
+    background-color: var(--couleur_nav_inactive);
+    color: var(--couleur_nav_texte);
+}
+
+.btn_deconnexion:hover {
+    background-color: #3a4558;
+}
+
+/* =========================================
+   SECTION PRINCIPALE
+   ========================================= */
+main {
+    flex: 1;
+    max-width: 900px;
+    width: 100%;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+/* =========================================
+   BARRE DE FILTRE
+   ========================================= */
+.filtre {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.filtre_label {
+    font-family: var(--font_corps);
+    font-size: 1rem;
+    font-weight: 300;
+    color: var(--couleur_texte_principal);
+}
+
+.filtre_select {
+    padding: 8px 14px;
+    border: 1px solid var(--couleur_card_bordure);
+    border-radius: 4px;
+    background-color: var(--couleur_card_fond);
+    font-family: var(--font_corps);
+    font-size: 0.9rem;
+    color: var(--couleur_texte_secondaire);
+    cursor: pointer;
+    outline: none;
+    appearance: auto;
+    transition: border-color 0.2s ease;
+}
+
+.filtre_select:focus,
+.filtre_select:hover {
+    border-color: var(--couleur_nav_inactive);
+}
+
+/* =========================================
+   GRILLE DE CARTES
+   ========================================= */
+.grille_cartes {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+}
+
+/* =========================================
+   CARTE INDIVIDUELLE
+   ========================================= */
+.card {
+    background-color: var(--couleur_card_fond);
+    border: 1px solid var(--couleur_card_bordure);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.card_nom {
+    padding: 8px 12px;
+    font-family: var(--font_corps);
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: var(--couleur_texte_secondaire);
+    border-bottom: 1px solid var(--couleur_card_bordure);
+    background-color: var(--couleur_card_fond);
+}
+
+.card_image {
+    background-color: var(--couleur_card_image);
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.card_image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.card:hover .card_image img {
+    transform: scale(1.05);
+}
+
+.card_valeur {
+    padding: 8px 12px;
+    font-family: var(--font_corps);
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: var(--couleur_texte_secondaire);
+    border-top: 1px solid var(--couleur_card_bordure);
+    background-color: var(--couleur_card_fond);
+}
+
+/* =========================================
+   FOOTER
+   ========================================= */
+.bas_de_page {
+    background-color: var(--couleur_footer);
+    text-align: center;
+    padding: 30px 20px;
+    margin-top: 40px;
+}
+
+.bas_de_page p {
+    font-family: var(--font_corps);
+    font-size: 0.85rem;
+    font-weight: 300;
+    color: var(--couleur_texte_principal);
+    letter-spacing: 0.01em;
+}
+
+/* =========================================
+   PAGE PROFIL
+   ========================================= */
+.profil_bloc {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    background-color: var(--couleur_card_fond);
+    border: 1px solid var(--couleur_card_bordure);
+    border-radius: 4px;
+    padding: 24px 30px;
+    margin-bottom: 30px;
+}
+
+.profil_photo {
+    width: 120px;
+    height: 120px;
+    min-width: 120px;
+    background-color: var(--couleur_card_image);
+    border: 1px solid var(--couleur_card_bordure);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profil_photo_icon {
+    font-size: 2rem;
+    opacity: 0.4;
+    filter: grayscale(100%);
+}
+
+.profil_infos {
+    display: flex;
+    gap: 80px;
+    flex: 1;
+}
+
+.profil_infos_gauche,
+.profil_infos_droite {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.profil_label {
+    font-family: var(--font_corps);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--couleur_texte_secondaire);
+}
+
+.profil_cartes_header {
+    margin-bottom: 16px;
+}
+
+.profil_separateur {
+    border: none;
+    border-top: 1px solid var(--couleur_card_bordure);
+    margin-top: 8px;
+}
+
+/* =========================================
+   PAGE GESTION DES CARTES
+   ========================================= */
+.gestion_main {
+    background-color: var(--couleur_card_fond);
+    border: 1px solid var(--couleur_card_bordure);
+    border-radius: 4px;
+    padding: 40px 60px;
+}
+
+.gestion_titre_section {
+    font-family: var(--font_corps);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--couleur_texte_principal);
+    margin-bottom: 28px;
+}
+
+.gestion_separateur {
+    border: none;
+    border-top: 1px solid var(--couleur_card_bordure);
+    margin: 40px 0;
+}
+
+.gestion_actions {
+    display: flex;
+    justify-content: center;
+    gap: 80px;
+    margin-top: 30px;
+}
+
+.btn_ajouter {
+    padding: 12px 36px;
+    background-color: var(--couleur_nav_active);
+    color: var(--couleur_nav_texte);
+    border: none;
+    border-radius: 4px;
+    font-family: var(--font_corps);
+    font-size: 0.95rem;
+    font-weight: 400;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn_ajouter:hover {
+    background-color: #d4911a;
+}
+
+.btn_supprimer {
+    padding: 12px 36px;
+    background-color: var(--couleur_nav_inactive);
+    color: var(--couleur_nav_texte);
+    border: none;
+    border-radius: 4px;
+    font-family: var(--font_corps);
+    font-size: 0.95rem;
+    font-weight: 400;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn_supprimer:hover {
+    background-color: #3a4558;
+}
+
+.gestion_formulaire {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.gestion_champ {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+.gestion_label {
+    font-family: var(--font_corps);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--couleur_texte_principal);
+    min-width: 90px;
+    text-align: right;
+}
+
+.gestion_input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--couleur_card_bordure);
+    border-radius: 4px;
+    font-family: var(--font_corps);
+    font-size: 0.9rem;
+    color: var(--couleur_texte_principal);
+    background-color: var(--couleur_card_fond);
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.gestion_input:focus {
+    border-color: var(--couleur_nav_inactive);
+}
+
+.gestion_input::placeholder {
+    color: var(--couleur_texte_secondaire);
+    font-weight: 300;
+}
+
+.gestion_input_file {
+    display: none;
+}
+
+.btn_upload {
+    padding: 10px 28px;
+    background-color: #6c63ff;
+    color: #ffffff;
+    border-radius: 4px;
+    font-family: var(--font_corps);
+    font-size: 0.95rem;
+    font-weight: 400;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn_upload:hover {
+    background-color: #5a52d5;
+}
+
+/* =========================================
+   MESSAGES DE RETOUR
+   ========================================= */
+.message_succes {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    border-radius: 4px;
+    padding: 12px 20px;
+    margin-bottom: 24px;
+    font-family: var(--font_corps);
+    font-size: 0.95rem;
+}
+
+.message_erreur {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    padding: 12px 20px;
+    margin-bottom: 24px;
+    font-family: var(--font_corps);
+    font-size: 0.95rem;
+}
+
+/* =========================================
+   PAGE LOGIN
+   ========================================= */
+.login_main {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 40px;
+}
+
+.login_bloc {
+    background-color: var(--couleur_card_fond);
+    border: 1px solid var(--couleur_card_bordure);
+    border-radius: 4px;
+    padding: 50px 60px;
+    width: 100%;
+    max-width: 480px;
+}
+
+.login_titre {
+    font-family: var(--font_corps);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--couleur_texte_principal);
+    text-align: center;
+    margin-bottom: 36px;
+}
+
+.login_formulaire {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.login_champ {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.login_label {
+    font-family: var(--font_corps);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--couleur_texte_principal);
+}
+
+.login_actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.login_actions .btn_ajouter {
+    width: 100%;
+}
+
+/* =========================================
+   RESPONSIVE
+   ========================================= */
+@media (max-width: 768px) {
+    .grille_cartes {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .titre h1 {
+        font-size: 1.8rem;
+    }
+
+    .barre_navigation {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 6px;
+        padding-bottom: 50px;
+    }
+
+    .nav_auth {
+        position: static;
+        transform: none;
+        margin-top: 8px;
+        width: 100%;
+        text-align: center;
+    }
+
+    .barre_navigation a {
+        padding: 8px 20px;
+    }
+
+    .profil_infos {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .gestion_main {
+        padding: 24px 20px;
+    }
+
+    .login_bloc {
+        padding: 30px 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .grille_cartes {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
