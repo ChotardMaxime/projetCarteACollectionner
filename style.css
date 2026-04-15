@@ -66,7 +66,6 @@ header {
     background-color: var(--couleur_fond);
 }
 
-/* Les 3 boutons principaux alignés en ligne et centrés */
 .nav_liens {
     display: flex;
     flex-direction: row;
@@ -77,7 +76,6 @@ header {
     flex: 0 0 auto;
 }
 
-/* Bouton auth ancré à droite */
 .nav_auth {
     position: absolute;
     right: 40px;
@@ -97,52 +95,34 @@ header {
 }
 
 .mon_profil a,
+.voir_les_cartes a,
 .gestion_des_cartes a {
     background-color: var(--couleur_nav_inactive);
     color: var(--couleur_nav_texte);
 }
 
 .mon_profil a:hover,
+.voir_les_cartes a:hover,
 .gestion_des_cartes a:hover {
     background-color: #3a4558;
 }
 
-.voir_les_cartes a {
-    background-color: var(--couleur_nav_inactive);
-    color: var(--couleur_nav_texte);
-}
-
-.voir_les_cartes.actif a {
-    background-color: var(--couleur_nav_active);
-    color: var(--couleur_nav_texte);
-    font-weight: 700;
-}
-
-.voir_les_cartes a:hover {
-    background-color: #d4911a;
-}
-
-.mon_profil.actif a {
-    background-color: var(--couleur_nav_active);
-    color: var(--couleur_nav_texte);
-    font-weight: 700;
-}
-
+.mon_profil.actif a,
+.voir_les_cartes.actif a,
 .gestion_des_cartes.actif a {
     background-color: var(--couleur_nav_active);
     color: var(--couleur_nav_texte);
     font-weight: 700;
 }
 
-/* Bouton connexion / déconnexion */
 .btn_auth {
     display: block;
     padding: 10px 24px;
+    text-decoration: none;
     font-family: var(--font_corps);
     font-size: 0.95rem;
     font-weight: 400;
     letter-spacing: 0.03em;
-    text-decoration: none;
     border-radius: 4px;
     transition: background-color 0.2s ease;
 }
@@ -170,7 +150,7 @@ header {
    ========================================= */
 main {
     flex: 1;
-    max-width: 900px;
+    max-width: 1400px;
     width: 100%;
     margin: 30px auto;
     padding: 0 20px;
@@ -217,7 +197,7 @@ main {
    ========================================= */
 .grille_cartes {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 18px;
 }
 
@@ -252,7 +232,7 @@ main {
 
 .card_image {
     background-color: var(--couleur_card_image);
-    flex: 1;
+    aspect-ratio: 3 / 4;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -323,6 +303,13 @@ main {
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
+}
+
+.profil_photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .profil_photo_icon {
@@ -333,15 +320,9 @@ main {
 
 .profil_infos {
     display: flex;
-    gap: 80px;
+    flex-wrap: wrap;
+    gap: 40px;
     flex: 1;
-}
-
-.profil_infos_gauche,
-.profil_infos_droite {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
 }
 
 .profil_label {
@@ -390,40 +371,6 @@ main {
     justify-content: center;
     gap: 80px;
     margin-top: 30px;
-}
-
-.btn_ajouter {
-    padding: 12px 36px;
-    background-color: var(--couleur_nav_active);
-    color: var(--couleur_nav_texte);
-    border: none;
-    border-radius: 4px;
-    font-family: var(--font_corps);
-    font-size: 0.95rem;
-    font-weight: 400;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.btn_ajouter:hover {
-    background-color: #d4911a;
-}
-
-.btn_supprimer {
-    padding: 12px 36px;
-    background-color: var(--couleur_nav_inactive);
-    color: var(--couleur_nav_texte);
-    border: none;
-    border-radius: 4px;
-    font-family: var(--font_corps);
-    font-size: 0.95rem;
-    font-weight: 400;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.btn_supprimer:hover {
-    background-color: #3a4558;
 }
 
 .gestion_formulaire {
@@ -489,6 +436,40 @@ main {
 
 .btn_upload:hover {
     background-color: #5a52d5;
+}
+
+.btn_ajouter {
+    padding: 12px 36px;
+    background-color: var(--couleur_nav_active);
+    color: var(--couleur_nav_texte);
+    border: none;
+    border-radius: 4px;
+    font-family: var(--font_corps);
+    font-size: 0.95rem;
+    font-weight: 400;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn_ajouter:hover {
+    background-color: #d4911a;
+}
+
+.btn_supprimer {
+    padding: 12px 36px;
+    background-color: var(--couleur_nav_inactive);
+    color: var(--couleur_nav_texte);
+    border: none;
+    border-radius: 4px;
+    font-family: var(--font_corps);
+    font-size: 0.95rem;
+    font-weight: 400;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn_supprimer:hover {
+    background-color: #3a4558;
 }
 
 /* =========================================
@@ -571,55 +552,4 @@ main {
 
 .login_actions .btn_ajouter {
     width: 100%;
-}
-
-/* =========================================
-   RESPONSIVE
-   ========================================= */
-@media (max-width: 768px) {
-    .grille_cartes {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .titre h1 {
-        font-size: 1.8rem;
-    }
-
-    .barre_navigation {
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 6px;
-        padding-bottom: 50px;
-    }
-
-    .nav_auth {
-        position: static;
-        transform: none;
-        margin-top: 8px;
-        width: 100%;
-        text-align: center;
-    }
-
-    .barre_navigation a {
-        padding: 8px 20px;
-    }
-
-    .profil_infos {
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .gestion_main {
-        padding: 24px 20px;
-    }
-
-    .login_bloc {
-        padding: 30px 24px;
-    }
-}
-
-@media (max-width: 480px) {
-    .grille_cartes {
-        grid-template-columns: repeat(2, 1fr);
-    }
 }
