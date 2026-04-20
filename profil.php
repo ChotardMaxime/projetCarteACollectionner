@@ -4,7 +4,6 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 require_once 'includes/db.php';
 
-// Sécurité : redirection si non connecté
 if (!isset($_SESSION['id_utilisateur'])) {
     header('Location: login.php');
     exit;
@@ -12,17 +11,29 @@ if (!isset($_SESSION['id_utilisateur'])) {
 
 $id_utilisateur = (int) $_SESSION['id_utilisateur'];
 
+// Suppression d'une carte de la collection
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'supprimer_carte') {
+    $id_carte = (int) ($_POST['id_carte'] ?? 0);
+    if ($id_carte > 0) {
+        $stmt = $pdo->prepare("DELETE FROM inventaire WHERE id_utilisateur = ? AND id_carte = ? LIMIT 1");
+        $stmt->execute([$id_utilisateur, $id_carte]);
+        $_SESSION['flash_info'] = 'La carte a été retirée de votre collection.';
+    }
+    header('Location: profil.php');
+    exit;
+}
+
 // Messages flash
-$success = $_SESSION['flash_success'] ?? '';
-$info = $_SESSION['flash_info'] ?? '';
+$flash_success = $_SESSION['flash_success'] ?? '';
+$flash_info    = $_SESSION['flash_info']    ?? '';
 unset($_SESSION['flash_success'], $_SESSION['flash_info']);
 
-// Infos de l'utilisateur
+// Infos utilisateur
 $stmt = $pdo->prepare("SELECT * FROM utilisateur WHERE id = ?");
 $stmt->execute([$id_utilisateur]);
 $utilisateur = $stmt->fetch();
 
-// Cartes de la collection
+// Collection
 $stmt = $pdo->prepare("
     SELECT c.*, inv.date_acquisition
     FROM inventaire inv
@@ -33,90 +44,21 @@ $stmt = $pdo->prepare("
 $stmt->execute([$id_utilisateur]);
 $mes_cartes = $stmt->fetchAll();
 
-// Statistiques
-$nb_cartes = count($mes_cartes);
+$nb_cartes    = count($mes_cartes);
 $valeur_total = array_sum(array_column($mes_cartes, 'valeur'));
 
 $page_active = 'profil';
-$titre_page = 'Mon Profil - CARTE A COLLECTIONNER';
+$titre_page  = 'Mon Profil - CARTE A COLLECTIONNER';
 require_once 'includes/header.php';
 ?>
 
-<style>
-    .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.65);
-        z-index: 1000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .modal-contenu {
-        background: var(--couleur_fond);
-        border: 1px solid var(--couleur_card_bordure);
-        border-radius: 8px;
-        padding: 30px;
-        text-align: center;
-        max-width: 440px;
-        width: 95%;
-    }
-
-    .modal-titre {
-        font-family: var(--font_corps);
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: var(--couleur_texte_principal);
-        margin-bottom: 20px;
-    }
-
-    #pack-canvas canvas {
-        display: block;
-        margin: 0 auto;
-        border-radius: 4px;
-    }
-
-    .btn-ouvrir-pack {
-        display: inline-block;
-        padding: 14px 48px;
-        background-color: var(--couleur_nav_active);
-        color: var(--couleur_nav_texte);
-        border: none;
-        border-radius: 4px;
-        font-family: var(--font_corps);
-        font-size: 1rem;
-        font-weight: 700;
-        cursor: pointer;
-        letter-spacing: 0.04em;
-        transition: background-color 0.2s ease, transform 0.1s ease;
-    }
-
-    .btn-ouvrir-pack:hover {
-        background-color: #d4911a;
-        transform: translateY(-2px);
-    }
-
-    .pack-zone {
-        text-align: center;
-        padding: 30px 0 10px;
-        margin-bottom: 20px;
-    }
-</style>
-
 <main>
 
-    <?php if ($success): ?>
-        <div class="message_succes"><?= htmlspecialchars($success) ?></div>
+    <?php if ($flash_success): ?>
+        <div class="message_succes"><?= htmlspecialchars($flash_success) ?></div>
     <?php endif; ?>
-    <?php if ($info): ?>
-        <div
-            style="background:#fff3cd;color:#856404;padding:12px 20px;border-radius:4px;border:1px solid #ffeeba;margin-bottom:24px;font-family:var(--font_corps);font-size:.95rem;">
-            <?= htmlspecialchars($info) ?>
-        </div>
+    <?php if ($flash_info): ?>
+        <div class="message_info"><?= htmlspecialchars($flash_info) ?></div>
     <?php endif; ?>
 
     <!-- BLOC PROFIL -->
@@ -130,15 +72,12 @@ require_once 'includes/header.php';
         </div>
         <div class="profil_infos">
             <div>
-                <p><span class="profil_label">Nom de profil : </span><?= htmlspecialchars($utilisateur['nom_profil']) ?>
-                </p>
-                <p style="margin-top:10px;"><span class="profil_label">Rôle :
-                    </span><?= htmlspecialchars($utilisateur['role']) ?></p>
+                <p><span class="profil_label">Nom de profil : </span><?= htmlspecialchars($utilisateur['nom_profil']) ?></p>
+                <p><span class="profil_label">Rôle : </span><?= htmlspecialchars($utilisateur['role']) ?></p>
             </div>
             <div>
-                <p><span class="profil_label">Nombre de cartes : </span><?= $nb_cartes ?></p>
-                <p style="margin-top:10px;"><span class="profil_label">Valeur collection :
-                    </span><?= number_format($valeur_total, 2, ',', ' ') ?> €</p>
+                <p><span class="profil_label">Cartes : </span><?= $nb_cartes ?></p>
+                <p><span class="profil_label">Valeur : </span><?= number_format($valeur_total, 2, ',', ' ') ?> €</p>
             </div>
         </div>
     </div>
@@ -156,16 +95,29 @@ require_once 'includes/header.php';
 
     <div class="grille_cartes">
         <?php if (empty($mes_cartes)): ?>
-            <p style="grid-column:1/-1;text-align:center;color:var(--couleur_texte_secondaire);">
+            <p class="collection-vide">
                 Votre collection est vide. Ouvrez un paquet pour commencer !
             </p>
         <?php else: ?>
             <?php foreach ($mes_cartes as $carte): ?>
-                <div class="card">
+                <div class="card"
+                     data-nom="<?= htmlspecialchars($carte['nom']) ?>"
+                     data-image="<?= htmlspecialchars($carte['image_url'] ?? '') ?>"
+                     data-rarete="<?= htmlspecialchars($carte['rarete']) ?>"
+                     data-valeur="<?= number_format($carte['valeur'], 2, ',', ' ') ?>">
+
+                    <!-- Bouton suppression -->
+                    <form method="POST" action="profil.php"
+                          onsubmit="return confirm('Retirer <?= htmlspecialchars(addslashes($carte['nom'])) ?> de votre collection ?');">
+                        <input type="hidden" name="action"   value="supprimer_carte">
+                        <input type="hidden" name="id_carte" value="<?= $carte['id'] ?>">
+                        <button type="submit" class="card-btn-supprimer" title="Retirer de la collection">×</button>
+                    </form>
+
                     <div class="card_nom"><?= htmlspecialchars($carte['nom']) ?></div>
                     <div class="card_image">
                         <img src="<?= htmlspecialchars($carte['image_url'] ?? '') ?>"
-                            alt="<?= htmlspecialchars($carte['nom']) ?>">
+                             alt="<?= htmlspecialchars($carte['nom']) ?>">
                     </div>
                     <div class="card_valeur"><?= number_format($carte['valeur'], 2, ',', ' ') ?> €</div>
                 </div>
@@ -182,7 +134,7 @@ require_once 'includes/header.php';
     <div class="modal-contenu">
         <h3 class="modal-titre">Ouverture du paquet</h3>
         <div id="pack-canvas"></div>
-        <div id="pack-erreur" class="message_erreur" style="display:none;margin-top:16px;"></div>
+        <div id="pack-erreur" class="message_erreur" style="display:none; margin-top:16px;"></div>
         <div style="margin-top:20px;">
             <button id="btn-fermer-pack" class="btn_supprimer" style="display:none;" onclick="fermerModalPack()">
                 Fermer
@@ -191,348 +143,267 @@ require_once 'includes/header.php';
     </div>
 </div>
 
-<!-- p5.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
-
 <script>
-    // =========================================
-    // SKETCH P5.JS — ANIMATION PACK OPENING
-    // =========================================
-    const packSketch = (p) => {
+// ==========================================================================
+// SKETCH P5.JS — ANIMATION PACK OPENING
+// ==========================================================================
+const packSketch = (p) => {
 
-        const PW = 130, PH = 180;
-        let cx, cy;
-        let state = 'idle';
-        let frameN = 0;
-        let topOff = 0;
-        let botOff = 0;
-        let cardImg = null;
-        let cardData = null;
-        let pts = [];
-        let closeCalled = false;
+    // Dimensions du paquet (phase d'animation)
+    const PW = 130, PH = 180;
+    // Dimensions de la carte révélée (significativement plus grande)
+    const CW = 220, CH = 310;
 
-        p.setup = () => {
-            const cnv = p.createCanvas(360, 380);
-            cnv.parent('pack-canvas');
-            cx = p.width / 2;
-            cy = p.height / 2;
-            p.textFont('Georgia, serif');
-        };
+    let cx, cy;
+    let state       = 'idle';
+    let frameN      = 0;
+    let topOff      = 0;
+    let botOff      = 0;
+    let cardImg     = null;
+    let cardData    = null;
+    let pts         = [];
+    let closeCalled = false;
 
-        p.draw = () => {
-            p.background(220, 227, 234);
-
-            if (state === 'idle') {
-                const pulse = 1 + Math.sin(p.frameCount * 0.05) * 0.015;
-                p.push();
-                p.translate(cx, cy);
-                p.scale(pulse);
-                drawPack();
-                p.pop();
-
-            } else if (state === 'opening') {
-                frameN++;
-                const t = Math.min(frameN / 55, 1);
-                const ease = easeInOut(t);
-                topOff = ease * 160;
-                botOff = ease * 160;
-
-                p.push();
-                p.translate(cx, cy);
-                drawPackHalves();
-                p.pop();
-
-                if (frameN === 3) spawnPts();
-                updatePts();
-                drawPts();
-
-                if (t >= 1) { state = 'revealing'; frameN = 0; }
-
-            } else if (state === 'revealing') {
-                frameN++;
-                const t = Math.min(frameN / 50, 1);
-
-                p.push();
-                p.translate(cx, cy);
-                drawCard(t);
-                p.pop();
-
-                updatePts();
-                drawPts();
-
-                if (t >= 1 && !closeCalled) {
-                    closeCalled = true;
-                    state = 'done';
-                    const btn = document.getElementById('btn-fermer-pack');
-                    if (btn) btn.style.display = 'inline-block';
-                }
-
-            } else if (state === 'done') {
-                p.push();
-                p.translate(cx, cy);
-                drawCard(1);
-                p.pop();
-            }
-        };
-
-        // ---- Helpers ----
-
-        function easeInOut(t) {
-            return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-        }
-
-        function drawPack() {
-            // Ombre
-            p.noStroke();
-            p.fill(0, 0, 0, 25);
-            p.rect(-PW / 2 + 3, -PH / 2 + 3, PW, PH, 10);
-
-            // Corps
-            p.fill(45, 55, 72);
-            p.stroke(232, 160, 32);
-            p.strokeWeight(2);
-            p.rect(-PW / 2, -PH / 2, PW, PH, 10);
-
-            // Etiquette
-            p.noStroke();
-            p.fill(232, 160, 32);
-            p.textAlign(p.CENTER, p.CENTER);
-            p.textSize(10);
-            p.text('PAQUET', 0, -PH / 2 + 16);
-
-            // Séparateur
-            p.stroke(232, 160, 32, 100);
-            p.strokeWeight(0.5);
-            p.line(-PW / 2 + 14, -PH / 2 + 28, PW / 2 - 14, -PH / 2 + 28);
-
-            // Symbole ?
-            p.noStroke();
-            p.fill(232, 160, 32);
-            p.textSize(58);
-            p.textAlign(p.CENTER, p.CENTER);
-            p.text('?', 0, 8);
-        }
-
-        function drawPackHalves() {
-            // Moitié haute
-            p.fill(45, 55, 72);
-            p.stroke(232, 160, 32);
-            p.strokeWeight(2);
-            p.rect(-PW / 2, -PH / 2 - topOff, PW, PH / 2, 10, 10, 0, 0);
-
-            p.noStroke();
-            p.fill(232, 160, 32);
-            p.textAlign(p.CENTER, p.CENTER);
-            p.textSize(10);
-            p.text('PAQUET', 0, -PH / 2 - topOff + 16);
-
-            // Moitié basse
-            p.fill(45, 55, 72);
-            p.stroke(232, 160, 32);
-            p.strokeWeight(2);
-            p.rect(-PW / 2, botOff, PW, PH / 2, 0, 0, 10, 10);
-        }
-
-        function drawCard(t) {
-            const sx = easeInOut(Math.min(t, 1));
-
-            p.push();
-            p.scale(sx, 1);
-
-            // Ombre
-            p.noStroke();
-            p.fill(0, 0, 0, 20 * sx);
-            p.rect(-PW / 2 + 3, -PH / 2 + 3, PW, PH, 10);
-
-            if (t <= 0.5) {
-                // Dos de la carte
-                p.fill(45, 55, 72);
-                p.stroke(232, 160, 32);
-                p.strokeWeight(2);
-                p.rect(-PW / 2, -PH / 2, PW, PH, 10);
-
-                p.noStroke();
-                p.fill(232, 160, 32);
-                p.textSize(40);
-                p.textAlign(p.CENTER, p.CENTER);
-                p.text('★', 0, 0);
-
-            } else if (cardData) {
-                // Face avant
-                p.fill(255);
-                p.stroke(232, 160, 32);
-                p.strokeWeight(2);
-                p.rect(-PW / 2, -PH / 2, PW, PH, 10);
-
-                const iW = PW - 16;
-                const iH = Math.floor((PH - 16) * 0.58);
-                const iX = -PW / 2 + 8;
-                const iY = -PH / 2 + 8;
-
-                // Zone image
-                if (cardImg) {
-                    p.noStroke();
-                    p.image(cardImg, iX, iY, iW, iH);
-                } else {
-                    p.fill(200, 210, 219);
-                    p.noStroke();
-                    p.rect(iX, iY, iW, iH, 4);
-                }
-
-                const textBase = iY + iH;
-
-                // Nom
-                p.noStroke();
-                p.fill(45, 55, 72);
-                p.textSize(11);
-                p.textAlign(p.CENTER, p.CENTER);
-                p.textStyle(p.BOLD);
-                p.text(cardData.nom, 0, textBase + 14);
-
-                // Badge rareté
-                const rc = rarityColor(cardData.rarete);
-                p.fill(rc[0], rc[1], rc[2]);
-                p.noStroke();
-                p.rect(-38, textBase + 24, 76, 15, 7);
-                p.fill(255);
-                p.textSize(9);
-                p.textStyle(p.NORMAL);
-                p.text(cardData.rarete, 0, textBase + 32);
-
-                // Valeur
-                p.noStroke();
-                p.fill(232, 160, 32);
-                p.textSize(12);
-                p.textStyle(p.BOLD);
-                p.text(parseFloat(cardData.valeur).toFixed(2) + ' €', 0, textBase + 50);
-            }
-
-            p.pop();
-        }
-
-        function rarityColor(r) {
-            const map = {
-                'commune': [113, 128, 150],
-                'peu commune': [45, 106, 79],
-                'rare': [26, 82, 118],
-                'ultra rare': [125, 60, 152]
-            };
-            return map[r] || [113, 128, 150];
-        }
-
-        function spawnPts() {
-            for (let i = 0; i < 20; i++) {
-                const angle = p.random(p.TWO_PI);
-                const speed = p.random(1.5, 4.5);
-                pts.push({
-                    x: cx,
-                    y: cy,
-                    vx: Math.cos(angle) * speed,
-                    vy: Math.sin(angle) * speed - 1,
-                    life: 1,
-                    size: p.random(3, 8),
-                    gold: p.random() > 0.4
-                });
-            }
-        }
-
-        function updatePts() {
-            for (let i = pts.length - 1; i >= 0; i--) {
-                pts[i].x += pts[i].vx;
-                pts[i].y += pts[i].vy;
-                pts[i].vy += 0.1;
-                pts[i].life -= 0.022;
-                if (pts[i].life <= 0) pts.splice(i, 1);
-            }
-        }
-
-        function drawPts() {
-            p.noStroke();
-            for (const pt of pts) {
-                const a = pt.life * 255;
-                pt.gold ? p.fill(232, 160, 32, a) : p.fill(255, 255, 255, a);
-                p.ellipse(pt.x, pt.y, pt.size * pt.life);
-            }
-        }
-
-        // ---- API publique ----
-
-        p.openPack = (data) => {
-            cardData = data;
-            cardImg = null;
-            if (data.image_url) {
-                p.loadImage(
-                    data.image_url,
-                    (img) => { cardImg = img; },
-                    () => { cardImg = null; }
-                );
-            }
-            state = 'opening';
-            frameN = 0;
-            topOff = 0;
-            botOff = 0;
-            pts = [];
-            closeCalled = false;
-        };
-
-        p.resetSketch = () => {
-            state = 'idle';
-            frameN = 0;
-            topOff = 0;
-            botOff = 0;
-            cardImg = null;
-            cardData = null;
-            pts = [];
-            closeCalled = false;
-        };
+    p.setup = () => {
+        // Canvas agrandi pour accueillir la grande carte
+        p.createCanvas(460, 500).parent('pack-canvas');
+        cx = p.width  / 2;
+        cy = p.height / 2;
+        p.textFont('Georgia, serif');
     };
 
-    // =========================================
-    // INITIALISATION DU SKETCH (une seule fois)
-    // =========================================
-    let packP5 = null;
+    p.draw = () => {
+        p.background(220, 227, 234);
 
-    document.addEventListener('DOMContentLoaded', () => {
-        packP5 = new p5(packSketch);
-    });
+        if (state === 'idle') {
+            const pulse = 1 + Math.sin(p.frameCount * 0.05) * 0.015;
+            p.push();
+            p.translate(cx, cy);
+            p.scale(pulse);
+            drawPack();
+            p.pop();
 
-    // =========================================
-    // GESTION DU MODAL
-    // =========================================
-    function ouvrirModalPack() {
-        const modal = document.getElementById('modal-pack');
-        const erreur = document.getElementById('pack-erreur');
-        const btnFermer = document.getElementById('btn-fermer-pack');
+        } else if (state === 'opening') {
+            frameN++;
+            const ease = easeInOut(Math.min(frameN / 55, 1));
+            topOff = ease * 200;
+            botOff = ease * 200;
+            p.push(); p.translate(cx, cy); drawPackHalves(); p.pop();
+            if (frameN === 3) spawnPts();
+            updatePts(); drawPts();
+            if (ease >= 1) { state = 'revealing'; frameN = 0; }
 
-        modal.style.display = 'flex';
-        erreur.style.display = 'none';
-        btnFermer.style.display = 'none';
+        } else if (state === 'revealing') {
+            frameN++;
+            const t = Math.min(frameN / 50, 1);
+            p.push(); p.translate(cx, cy); drawCard(t); p.pop();
+            updatePts(); drawPts();
+            if (t >= 1 && !closeCalled) {
+                closeCalled = true;
+                state = 'done';
+                document.getElementById('btn-fermer-pack').style.display = 'inline-block';
+            }
 
-        if (packP5) packP5.resetSketch();
+        } else if (state === 'done') {
+            p.push(); p.translate(cx, cy); drawCard(1); p.pop();
+        }
+    };
 
-        fetch('pack.php', { method: 'POST' })
-            .then(r => r.json())
-            .then(data => {
-                if (data.succes) {
-                    if (packP5) packP5.openPack(data.carte);
-                } else {
-                    erreur.textContent = data.message;
-                    erreur.style.display = 'block';
-                    btnFermer.style.display = 'inline-block';
-                }
-            })
-            .catch(() => {
-                erreur.textContent = 'Erreur de connexion. Veuillez réessayer.';
-                erreur.style.display = 'block';
-                btnFermer.style.display = 'inline-block';
+    function easeInOut(t) {
+        return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    }
+
+    // ---- Dessin du paquet fermé ----
+    function drawPack() {
+        p.noStroke();
+        p.fill(0, 0, 0, 25);
+        p.rect(-PW / 2 + 3, -PH / 2 + 3, PW, PH, 10);
+
+        p.fill(45, 55, 72);
+        p.stroke(232, 160, 32);
+        p.strokeWeight(2);
+        p.rect(-PW / 2, -PH / 2, PW, PH, 10);
+
+        p.noStroke(); p.fill(232, 160, 32);
+        p.textAlign(p.CENTER, p.CENTER); p.textSize(10);
+        p.text('PAQUET', 0, -PH / 2 + 16);
+
+        p.stroke(232, 160, 32, 100); p.strokeWeight(0.5);
+        p.line(-PW / 2 + 14, -PH / 2 + 28, PW / 2 - 14, -PH / 2 + 28);
+
+        p.noStroke(); p.fill(232, 160, 32);
+        p.textSize(58); p.textAlign(p.CENTER, p.CENTER);
+        p.text('?', 0, 8);
+    }
+
+    // ---- Dessin des moitiés du paquet qui s'écartent ----
+    function drawPackHalves() {
+        p.fill(45, 55, 72); p.stroke(232, 160, 32); p.strokeWeight(2);
+        p.rect(-PW / 2, -PH / 2 - topOff, PW, PH / 2, 10, 10, 0, 0);
+        p.noStroke(); p.fill(232, 160, 32);
+        p.textAlign(p.CENTER, p.CENTER); p.textSize(10);
+        p.text('PAQUET', 0, -PH / 2 - topOff + 16);
+
+        p.fill(45, 55, 72); p.stroke(232, 160, 32); p.strokeWeight(2);
+        p.rect(-PW / 2, botOff, PW, PH / 2, 0, 0, 10, 10);
+    }
+
+    // ---- Dessin de la carte révélée (grande) ----
+    function drawCard(t) {
+        const sx = easeInOut(Math.min(t, 1));
+        p.push();
+        p.scale(sx, 1);
+
+        // Ombre portée
+        p.noStroke(); p.fill(0, 0, 0, 30 * sx);
+        p.rect(-CW / 2 + 5, -CH / 2 + 5, CW, CH, 12);
+
+        const rc = cardData ? rarityBorderColor(cardData.rarete) : [113, 128, 150];
+
+        if (t <= 0.5) {
+            // Dos de la carte
+            p.fill(45, 55, 72); p.stroke(rc[0], rc[1], rc[2]); p.strokeWeight(3);
+            p.rect(-CW / 2, -CH / 2, CW, CH, 12);
+            p.noStroke(); p.fill(232, 160, 32);
+            p.textSize(64); p.textAlign(p.CENTER, p.CENTER);
+            p.text('★', 0, 0);
+
+        } else if (cardData) {
+            // Face de la carte
+            p.fill(255); p.stroke(rc[0], rc[1], rc[2]); p.strokeWeight(3);
+            p.rect(-CW / 2, -CH / 2, CW, CH, 12);
+
+            // Zone image — 60% de la hauteur de la carte
+            const iW = CW - 20;
+            const iH = Math.floor((CH - 20) * 0.60);
+            const iX = -CW / 2 + 10;
+            const iY = -CH / 2 + 10;
+            const textBase = iY + iH;
+
+            if (cardImg) {
+                p.noStroke();
+                p.image(cardImg, iX, iY, iW, iH);
+            } else {
+                p.fill(200, 210, 219); p.noStroke();
+                p.rect(iX, iY, iW, iH, 6);
+            }
+
+            // Nom
+            p.noStroke(); p.fill(45, 55, 72);
+            p.textSize(15); p.textAlign(p.CENTER, p.CENTER); p.textStyle(p.BOLD);
+            p.text(cardData.nom, 0, textBase + 18);
+
+            // Badge rareté
+            p.fill(rc[0], rc[1], rc[2]); p.noStroke();
+            p.rect(-50, textBase + 30, 100, 20, 10);
+            p.fill(255); p.textSize(11); p.textStyle(p.NORMAL);
+            p.text(cardData.rarete, 0, textBase + 41);
+
+            // Valeur
+            p.noStroke(); p.fill(232, 160, 32);
+            p.textSize(16); p.textStyle(p.BOLD);
+            p.text(parseFloat(cardData.valeur).toFixed(2) + ' €', 0, textBase + 64);
+        }
+        p.pop();
+    }
+
+    function rarityBorderColor(r) {
+        const map = {
+            'commune'     : [113, 128, 150],
+            'peu commune' : [45,  106,  79],
+            'rare'        : [26,   82, 118],
+            'ultra rare'  : [125,  60, 152]
+        };
+        return map[r] || [113, 128, 150];
+    }
+
+    function spawnPts() {
+        const rarete = cardData ? cardData.rarete : 'commune';
+        const isRare = rarete === 'rare' || rarete === 'ultra rare';
+        const count  = isRare ? 35 : 22;
+        for (let i = 0; i < count; i++) {
+            const angle = p.random(p.TWO_PI);
+            const speed = p.random(1.5, isRare ? 7 : 5);
+            pts.push({
+                x: cx, y: cy,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 1,
+                life: 1,
+                size: p.random(3, isRare ? 11 : 8),
+                gold: p.random() > (isRare ? 0.2 : 0.4)
             });
+        }
     }
 
-    function fermerModalPack() {
-        document.getElementById('modal-pack').style.display = 'none';
-        if (packP5) packP5.resetSketch();
-        location.reload();
+    function updatePts() {
+        for (let i = pts.length - 1; i >= 0; i--) {
+            pts[i].x += pts[i].vx; pts[i].y += pts[i].vy;
+            pts[i].vy += 0.1;      pts[i].life -= 0.02;
+            if (pts[i].life <= 0) pts.splice(i, 1);
+        }
     }
+
+    function drawPts() {
+        p.noStroke();
+        for (const pt of pts) {
+            const a = pt.life * 255;
+            pt.gold ? p.fill(232, 160, 32, a) : p.fill(255, 255, 255, a);
+            p.ellipse(pt.x, pt.y, pt.size * pt.life);
+        }
+    }
+
+    p.openPack = (data) => {
+        cardData = data; cardImg = null;
+        if (data.image_url) {
+            p.loadImage(data.image_url, img => { cardImg = img; }, () => { cardImg = null; });
+        }
+        state = 'opening'; frameN = 0; topOff = 0; botOff = 0;
+        pts = []; closeCalled = false;
+    };
+
+    p.resetSketch = () => {
+        state = 'idle'; frameN = 0; topOff = 0; botOff = 0;
+        cardImg = null; cardData = null; pts = []; closeCalled = false;
+    };
+};
+
+let packP5 = null;
+document.addEventListener('DOMContentLoaded', () => { packP5 = new p5(packSketch); });
+
+function ouvrirModalPack() {
+    const modal     = document.getElementById('modal-pack');
+    const erreur    = document.getElementById('pack-erreur');
+    const btnFermer = document.getElementById('btn-fermer-pack');
+
+    modal.style.display     = 'flex';
+    erreur.style.display    = 'none';
+    btnFermer.style.display = 'none';
+    if (packP5) packP5.resetSketch();
+
+    fetch('pack.php', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.succes) {
+                if (packP5) packP5.openPack(data.carte);
+            } else {
+                erreur.textContent      = data.message;
+                erreur.style.display    = 'block';
+                btnFermer.style.display = 'inline-block';
+            }
+        })
+        .catch(() => {
+            erreur.textContent      = 'Erreur de connexion. Veuillez réessayer.';
+            erreur.style.display    = 'block';
+            btnFermer.style.display = 'inline-block';
+        });
+}
+
+function fermerModalPack() {
+    document.getElementById('modal-pack').style.display = 'none';
+    if (packP5) packP5.resetSketch();
+    location.reload();
+}
 </script>
 
 <?php require_once 'includes/footer.php'; ?>

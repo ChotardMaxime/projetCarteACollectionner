@@ -2,23 +2,20 @@
 require_once 'includes/db.php';
 
 $page_active = 'index';
-$titre_page = 'CARTE A COLLECTIONNER';
+$titre_page  = 'CARTE A COLLECTIONNER';
 
-// Récupération du filtre choisi par l'utilisateur
 $filtre = $_GET['filtre'] ?? '';
 
-// Construction de la requête selon le filtre
 $sql = "SELECT * FROM carte";
-
 if ($filtre === 'valeur') {
-    $sql .= " GROUP BY nom ORDER BY valeur DESC";
+    $sql .= " ORDER BY valeur DESC";
 } elseif ($filtre === 'nom') {
-    $sql .= " GROUP BY nom ORDER BY nom ASC";
+    $sql .= " ORDER BY nom ASC";
 } elseif ($filtre === 'rarete') {
-    $sql .= " GROUP BY nom ORDER BY FIELD(rarete, 'ultra rare', 'rare', 'peu commune', 'commune')";
-} 
+    $sql .= " ORDER BY FIELD(rarete, 'ultra rare', 'rare', 'peu commune', 'commune')";
+}
 
-$stmt = $pdo->query($sql);
+$stmt   = $pdo->query($sql);
 $cartes = $stmt->fetchAll();
 
 require_once 'includes/header.php';
@@ -28,8 +25,9 @@ require_once 'includes/header.php';
         <span class="filtre_label">Toutes les cartes</span>
         <form method="GET" action="index.php">
             <select class="filtre_select" name="filtre" onchange="this.form.submit()">
+                <option value=""       <?= $filtre === ''       ? 'selected' : '' ?>>Sans filtre</option>
                 <option value="valeur" <?= $filtre === 'valeur' ? 'selected' : '' ?>>Par valeur</option>
-                <option value="nom" <?= $filtre === 'nom' ? 'selected' : '' ?>>Par nom</option>
+                <option value="nom"    <?= $filtre === 'nom'    ? 'selected' : '' ?>>Par nom</option>
                 <option value="rarete" <?= $filtre === 'rarete' ? 'selected' : '' ?>>Par rareté</option>
             </select>
         </form>
@@ -37,10 +35,15 @@ require_once 'includes/header.php';
 
     <div class="grille_cartes">
         <?php foreach ($cartes as $carte): ?>
-            <div class="card">
+            <div class="card"
+                 data-nom="<?= htmlspecialchars($carte['nom']) ?>"
+                 data-image="<?= htmlspecialchars($carte['image_url'] ?? '') ?>"
+                 data-rarete="<?= htmlspecialchars($carte['rarete']) ?>"
+                 data-valeur="<?= number_format($carte['valeur'], 2, ',', ' ') ?> €">
                 <div class="card_nom"><?= htmlspecialchars($carte['nom']) ?></div>
                 <div class="card_image">
-                    <img src="<?= htmlspecialchars($carte['image_url']) ?>" alt="<?= htmlspecialchars($carte['nom']) ?>">
+                    <img src="<?= htmlspecialchars($carte['image_url']) ?>"
+                         alt="<?= htmlspecialchars($carte['nom']) ?>">
                 </div>
                 <div class="card_valeur"><?= number_format($carte['valeur'], 2, ',', ' ') ?> €</div>
             </div>

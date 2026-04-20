@@ -66,6 +66,7 @@ header {
     background-color: var(--couleur_fond);
 }
 
+/* Les 3 boutons principaux alignés en ligne et centrés */
 .nav_liens {
     display: flex;
     flex-direction: row;
@@ -76,6 +77,7 @@ header {
     flex: 0 0 auto;
 }
 
+/* Bouton auth ancré à droite */
 .nav_auth {
     position: absolute;
     right: 40px;
@@ -95,34 +97,52 @@ header {
 }
 
 .mon_profil a,
-.voir_les_cartes a,
 .gestion_des_cartes a {
     background-color: var(--couleur_nav_inactive);
     color: var(--couleur_nav_texte);
 }
 
 .mon_profil a:hover,
-.voir_les_cartes a:hover,
 .gestion_des_cartes a:hover {
     background-color: #3a4558;
 }
 
-.mon_profil.actif a,
-.voir_les_cartes.actif a,
+.voir_les_cartes a {
+    background-color: var(--couleur_nav_inactive);
+    color: var(--couleur_nav_texte);
+}
+
+.voir_les_cartes.actif a {
+    background-color: var(--couleur_nav_active);
+    color: var(--couleur_nav_texte);
+    font-weight: 700;
+}
+
+.voir_les_cartes a:hover {
+    background-color: #d4911a;
+}
+
+.mon_profil.actif a {
+    background-color: var(--couleur_nav_active);
+    color: var(--couleur_nav_texte);
+    font-weight: 700;
+}
+
 .gestion_des_cartes.actif a {
     background-color: var(--couleur_nav_active);
     color: var(--couleur_nav_texte);
     font-weight: 700;
 }
 
+/* Bouton connexion / déconnexion */
 .btn_auth {
     display: block;
     padding: 10px 24px;
-    text-decoration: none;
     font-family: var(--font_corps);
     font-size: 0.95rem;
     font-weight: 400;
     letter-spacing: 0.03em;
+    text-decoration: none;
     border-radius: 4px;
     transition: background-color 0.2s ease;
 }
@@ -150,7 +170,7 @@ header {
    ========================================= */
 main {
     flex: 1;
-    max-width: 1400px;
+    max-width: 900px;
     width: 100%;
     margin: 30px auto;
     padding: 0 20px;
@@ -197,7 +217,7 @@ main {
    ========================================= */
 .grille_cartes {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 18px;
 }
 
@@ -232,7 +252,7 @@ main {
 
 .card_image {
     background-color: var(--couleur_card_image);
-    aspect-ratio: 3 / 4;
+    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -303,13 +323,6 @@ main {
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
-}
-
-.profil_photo img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
 }
 
 .profil_photo_icon {
@@ -320,9 +333,15 @@ main {
 
 .profil_infos {
     display: flex;
-    flex-wrap: wrap;
-    gap: 40px;
+    gap: 80px;
     flex: 1;
+}
+
+.profil_infos_gauche,
+.profil_infos_droite {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
 .profil_label {
@@ -371,6 +390,40 @@ main {
     justify-content: center;
     gap: 80px;
     margin-top: 30px;
+}
+
+.btn_ajouter {
+    padding: 12px 36px;
+    background-color: var(--couleur_nav_active);
+    color: var(--couleur_nav_texte);
+    border: none;
+    border-radius: 4px;
+    font-family: var(--font_corps);
+    font-size: 0.95rem;
+    font-weight: 400;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn_ajouter:hover {
+    background-color: #d4911a;
+}
+
+.btn_supprimer {
+    padding: 12px 36px;
+    background-color: var(--couleur_nav_inactive);
+    color: var(--couleur_nav_texte);
+    border: none;
+    border-radius: 4px;
+    font-family: var(--font_corps);
+    font-size: 0.95rem;
+    font-weight: 400;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn_supprimer:hover {
+    background-color: #3a4558;
 }
 
 .gestion_formulaire {
@@ -436,40 +489,6 @@ main {
 
 .btn_upload:hover {
     background-color: #5a52d5;
-}
-
-.btn_ajouter {
-    padding: 12px 36px;
-    background-color: var(--couleur_nav_active);
-    color: var(--couleur_nav_texte);
-    border: none;
-    border-radius: 4px;
-    font-family: var(--font_corps);
-    font-size: 0.95rem;
-    font-weight: 400;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.btn_ajouter:hover {
-    background-color: #d4911a;
-}
-
-.btn_supprimer {
-    padding: 12px 36px;
-    background-color: var(--couleur_nav_inactive);
-    color: var(--couleur_nav_texte);
-    border: none;
-    border-radius: 4px;
-    font-family: var(--font_corps);
-    font-size: 0.95rem;
-    font-weight: 400;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.btn_supprimer:hover {
-    background-color: #3a4558;
 }
 
 /* =========================================
@@ -552,4 +571,227 @@ main {
 
 .login_actions .btn_ajouter {
     width: 100%;
+}
+
+/* =========================================
+   RESPONSIVE
+   ========================================= */
+@media (max-width: 768px) {
+    .grille_cartes {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .titre h1 {
+        font-size: 1.8rem;
+    }
+
+    .barre_navigation {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 6px;
+        padding-bottom: 50px;
+    }
+
+    .nav_auth {
+        position: static;
+        transform: none;
+        margin-top: 8px;
+        width: 100%;
+        text-align: center;
+    }
+
+    .barre_navigation a {
+        padding: 8px 20px;
+    }
+
+    .profil_infos {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .gestion_main {
+        padding: 24px 20px;
+    }
+
+    .login_bloc {
+        padding: 30px 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .grille_cartes {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+/* ==========================================================================
+   PACK OPENING — Bouton & Zone
+   ========================================================================== */
+.pack-zone {
+    text-align: center;
+    padding: 30px 0 10px;
+    margin-bottom: 20px;
+}
+
+.btn-ouvrir-pack {
+    display: inline-block;
+    padding: 14px 48px;
+    background-color: var(--couleur_nav_active);
+    color: var(--couleur_nav_texte);
+    border: none;
+    border-radius: 4px;
+    font-family: var(--font_corps);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-ouvrir-pack:hover {
+    background-color: #d4911a;
+    transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   PACK OPENING — Modal & Canvas p5.js
+   ========================================================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.65);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-contenu {
+    background: var(--couleur_fond);
+    border: 1px solid var(--couleur_card_bordure);
+    border-radius: 8px;
+    padding: 30px;
+    text-align: center;
+    max-width: 520px;
+    width: 95%;
+}
+
+.modal-titre {
+    font-family: var(--font_corps);
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--couleur_texte_principal);
+    margin-bottom: 20px;
+}
+
+#pack-canvas canvas {
+    display: block;
+    margin: 0 auto;
+    border-radius: 4px;
+}
+
+/* ==========================================================================
+   ZOOM GLOBAL — Pop-up de zoom au clic sur une carte (toutes les pages)
+   ========================================================================== */
+.zoom-overlay {
+    position: fixed;
+    inset: 0;
+    /* Voile très discret — laisse voir le design derrière */
+    background: rgba(45, 55, 72, 0.35);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.zoom-carte {
+    position: relative;
+    background: var(--couleur_card_fond);
+    border: 2px solid var(--couleur_card_bordure);
+    border-radius: 12px;
+    padding: 20px;
+    width: 300px;
+    max-width: 92vw;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    animation: zoomEntree 0.2s ease;
+}
+
+@keyframes zoomEntree {
+    from { transform: scale(0.88); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+}
+
+.zoom-fermer {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    background: var(--couleur_card_image);
+    border: none;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--couleur_texte_principal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s ease;
+    z-index: 1;
+}
+
+.zoom-fermer:hover {
+    background-color: #c53030;
+    color: #ffffff;
+}
+
+.zoom-image {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    border-radius: 6px;
+    background: var(--couleur_card_image);
+    margin-bottom: 16px;
+}
+
+.zoom-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.zoom-infos {
+    text-align: center;
+}
+
+.zoom-nom {
+    font-family: var(--font_corps);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--couleur_texte_principal);
+    margin-bottom: 8px;
+}
+
+.zoom-rarete {
+    display: inline-block;
+    padding: 4px 16px;
+    border-radius: 20px;
+    font-family: var(--font_corps);
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: #ffffff;
+    background-color: var(--couleur_nav_inactive);
+    margin-bottom: 10px;
+    text-transform: capitalize;
+}
+
+.zoom-valeur {
+    font-family: var(--font_corps);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--couleur_nav_active);
 }

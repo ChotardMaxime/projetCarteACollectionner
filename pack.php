@@ -6,13 +6,11 @@ require_once 'includes/db.php';
 
 header('Content-Type: application/json');
 
-// Vérification de la session
 if (!isset($_SESSION['id_utilisateur'])) {
     echo json_encode(['succes' => false, 'message' => 'Vous devez être connecté.']);
     exit;
 }
 
-// Accepte uniquement les requêtes POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['succes' => false, 'message' => 'Méthode non autorisée.']);
     exit;
@@ -20,28 +18,74 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $id_utilisateur = (int) $_SESSION['id_utilisateur'];
 
-// Tirage : une carte aléatoire parmi celles que l'utilisateur ne possède PAS encore
+// =========================================
+// POIDS PAR RARETÉ
+// commune    : 50%
+// peu commune: 30%
+// rare       : 15%
+// ultra rare :  5%
+// =========================================
+$poids = [
+    'commune'     => 50,
+    'peu commune' => 30,
+    'rare'        => 15,
+    'ultra rare'  =>  5,
+];
+
+// Cartes disponibles (non encore possédées par l'utilisateur)
 $stmt = $pdo->prepare("
     SELECT * FROM carte
     WHERE id NOT IN (
         SELECT id_carte FROM inventaire WHERE id_utilisateur = ?
     )
-    ORDER BY RAND()
-    LIMIT 1
 ");
 $stmt->execute([$id_utilisateur]);
-$carte = $stmt->fetch();
+$disponibles = $stmt->fetchAll();
 
-// Toutes les cartes sont déjà possédées
-if (!$carte) {
+if (empty($disponibles)) {
     echo json_encode([
-        'succes' => false,
+        'succes'  => false,
         'message' => 'Félicitations ! Vous possédez déjà toutes les cartes disponibles.'
     ]);
     exit;
 }
 
-// Ajout de la carte dans la collection
+// Regrouper par rareté
+$par_rarete = [];
+foreach ($disponibles as $c) {
+    $par_rarete[$c['rarete']][] = $c;
+}
+
+// =========================================
+// TIRAGE PONDÉRÉ AVEC FALLBACK
+// Si un palier est vide ses poids sont
+// redistribués sur les paliers disponibles.
+// =========================================
+function tirerRarete(array $poids, array $par_rarete): string
+{
+    $poids_filtres = array_filter(
+        $poids,
+        fn($r) => isset($par_rarete[$r]) && count($par_rarete[$r]) > 0,
+        ARRAY_FILTER_USE_KEY
+    );
+
+    $total = array_sum($poids_filtres);
+    $roll  = mt_rand(1, $total);
+    $cumul = 0;
+
+    foreach ($poids_filtres as $rarete => $poid) {
+        $cumul += $poid;
+        if ($roll <= $cumul) return $rarete;
+    }
+
+    return array_key_first($poids_filtres);
+}
+
+$rarete_tiree = tirerRarete($poids, $par_rarete);
+$pool         = $par_rarete[$rarete_tiree];
+$carte        = $pool[array_rand($pool)];
+
+// Insertion dans la collection
 $stmt = $pdo->prepare("
     INSERT INTO inventaire (id_utilisateur, id_carte, date_acquisition)
     VALUES (?, ?, CURDATE())

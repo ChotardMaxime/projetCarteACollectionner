@@ -25,7 +25,6 @@ if (session_status() === PHP_SESSION_NONE) {
         </div>
         <nav class="barre_navigation">
 
-            <!-- LIENS PRINCIPAUX (centrés) -->
             <div class="nav_liens">
                 <div class="mon_profil <?= ($page_active ?? '') === 'profil' ? 'actif' : '' ?>">
                     <a href="profil.php">Mon profil</a>
@@ -38,16 +37,80 @@ if (session_status() === PHP_SESSION_NONE) {
                 </div>
             </div>
 
-            <!-- BOUTON CONNEXION / DECONNEXION (tout à droite) -->
             <div class="nav_auth">
                 <?php if (isset($_SESSION['id_utilisateur'])): ?>
                     <a href="logout.php" class="btn_auth btn_deconnexion">Se déconnecter</a>
                 <?php else: ?>
                     <a href="login.php"
-                        class="btn_auth btn_connexion <?= ($page_active ?? '') === 'login' ? 'actif' : '' ?>">Se
-                        connecter</a>
+                        class="btn_auth btn_connexion <?= ($page_active ?? '') === 'login' ? 'actif' : '' ?>">Se connecter</a>
                 <?php endif; ?>
             </div>
 
         </nav>
     </header>
+
+    <!-- ==========================================================================
+         MODAL ZOOM GLOBAL — présent sur toutes les pages, activé au clic d'une carte
+         ========================================================================== -->
+    <div id="zoom-overlay" class="zoom-overlay" style="display:none;" onclick="fermerZoom(event)">
+        <div class="zoom-carte" id="zoom-carte">
+            <button class="zoom-fermer" onclick="fermerZoom()" title="Fermer">×</button>
+            <div class="zoom-image">
+                <img id="zoom-img" src="" alt="">
+            </div>
+            <div class="zoom-infos">
+                <div class="zoom-nom"    id="zoom-nom"></div>
+                <div class="zoom-rarete" id="zoom-rarete"></div>
+                <div class="zoom-valeur" id="zoom-valeur"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ==========================================================================
+    // ZOOM GLOBAL — délégation d'événement sur toutes les .card du document
+    // ==========================================================================
+    document.addEventListener('click', function(e) {
+        // Ignorer les clics sur le bouton × et son formulaire parent
+        if (e.target.closest('.card-btn-supprimer') || e.target.closest('form')) return;
+
+        const card = e.target.closest('.card');
+        if (!card) return;
+
+        const nom    = card.dataset.nom    || card.querySelector('.card_nom')?.textContent?.trim()    || '';
+        const image  = card.dataset.image  || card.querySelector('.card_image img')?.getAttribute('src') || '';
+        const rarete = card.dataset.rarete || '';
+        const valeur = card.dataset.valeur || card.querySelector('.card_valeur')?.textContent?.trim() || '';
+
+        ouvrirZoom(nom, image, rarete, valeur);
+    });
+
+    function ouvrirZoom(nom, image, rarete, valeur) {
+        document.getElementById('zoom-img').src           = image;
+        document.getElementById('zoom-img').alt           = nom;
+        document.getElementById('zoom-nom').textContent   = nom;
+        document.getElementById('zoom-rarete').textContent = rarete;
+        document.getElementById('zoom-valeur').textContent = valeur;
+
+        const couleurs = {
+            'commune'     : '#718096',
+            'peu commune' : '#2d6a4f',
+            'rare'        : '#1a5276',
+            'ultra rare'  : '#6c3483'
+        };
+        document.getElementById('zoom-rarete').style.backgroundColor = couleurs[rarete] || '#718096';
+
+        document.getElementById('zoom-overlay').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function fermerZoom(e) {
+        if (e && e.target.closest && e.target.closest('.zoom-carte')) return;
+        document.getElementById('zoom-overlay').style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') fermerZoom();
+    });
+    </script>
